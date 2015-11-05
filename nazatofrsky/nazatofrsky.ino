@@ -13,7 +13,11 @@ NOTE: Some Parts of the code are NOT for commercial use (NAZADECODER)!!
 #include "FrSkySPort.h"
 #include "NazaDecoderLib.h"
 #include "config.h"
+#include "ADC.h"
 
+ADC *adc = new ADC();
+
+#define A38 38
 
 int ledpin = 13;
 int timer = 0;
@@ -38,8 +42,9 @@ int32_t    climb_rate=0;        // 100= 1m/s
 // These are special for FrSky
 int32_t     gps_status = 0;     // (ap_sat_visible * 10) + ap_fixtype                                             // ex. 83 = 8 sattelites visible, 3D lock 
 
+uint32_t internal_temp=0;   // internal temperature in C * 100
 
-
+IntervalTimer timer0;
 
 void setup()
 {
@@ -47,9 +52,25 @@ void setup()
   FrSkySPort_Init();
   NazaSerial.begin(115200);
   pinMode(ledpin, OUTPUT);
+
+  pinMode(A38, INPUT);
+    pinMode(A2, INPUT);
+
+  adc->setReference(ADC_REF_1V2);
+  adc->setAveraging(32); // set number of averages
+  adc->setResolution(16); // set bits of resolution
+
+  timer0.begin(read_temp, 200000 ); // 200ms in us
 }
 
-
+void read_temp()
+{
+  
+  // https://forum.pjrc.com/threads/23580-Teensy-3-Temperature-Calculation
+  int a2d = adc->analogRead(38);
+  internal_temp = (181964504 - 69971 * a2d) >> 12;
+  internal_temp = 25 - (a2d - 38700)/-35.7;;
+}
 
 void loop()
 {                                                  
@@ -75,6 +96,8 @@ void loop()
         heading=NazaDecoder.getHeading();
         break;
     }
+  } else {
+     read_temp();
   }
   FrSkySPort_Process();               // Process Informations and send it to FrSky
 
@@ -99,4 +122,41 @@ else
   timer++;
 }
 } 
+
+void timer0_callback(void) {
+
+    //digitalWriteFast(ledPin+1, HIGH);
+
+    adc->startSingleRead(A38, ADC_0); // also: startSingleDifferential, analogSynchronizedRead, analogSynchronizedReadDifferential
+
+    //digitalWriteFast(ledPin+1, LOW);
+    //digitalWriteFast(ledPin+1, !digitalReadFast(ledPin+1));
+}
+
+/*
+void adc0_isr() {
+
+    uint8_t pin = ADC::sc1a2channelADC0[ADC0_SC1A&ADC_SC1A_CHANNELS]; // the bits 0-4 of ADC0_SC1A have the channel
+
+    // add value to correct buffer
+    if(pin==A38) {
+        
+        internal_temp=adc->readSingle();
+        
+    } else { // clear interrupt anyway
+        adc->readSingle();
+    }
+
+    // restore ADC config if it was in use before being interrupted by the analog timer
+    if (adc->adc0->adcWasInUse) {
+        // restore ADC config, and restart conversion
+        adc->adc0->loadConfig(&adc->adc0->adc_config);
+        // avoid a conversion started by this isr to repeat itself
+        adc->adc0->adcWasInUse = false;
+    }
+
+
+    //digitalWriteFast(ledPin+2, !digitalReadFast(ledPin+2));
+
+}*/
 

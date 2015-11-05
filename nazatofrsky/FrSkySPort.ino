@@ -153,7 +153,8 @@ void FrSkySPort_Process(void) {
                    FrSkySPort_SendPackage(FR_ID_T1,gps_status);  //T1 
                    break; 
                 case 16:
-                   FrSkySPort_SendPackage(FR_ID_T2,gps_altitude); //Altitude again on T2 for DEBUG
+                   //FrSkySPort_SendPackage(FR_ID_T2,gps_altitude); //Altitude again on T2 for DEBUG
+                   FrSkySPort_SendPackage(FR_ID_T2, internal_temp);
                    break;
                case 17:
                    FrSkySPort_SendPackage(FR_ID_VARIO,climb_rate );       // 100 = 1m/s        
