@@ -75,7 +75,7 @@ void FrSkySPort_Process(void) {
         while ( FrSkySPort_Serial.available()) 
           {
 	  data =  FrSkySPort_Serial.read();
-          if (lastRx == START_STOP && ((data == SENSOR_ID1) || (data == SENSOR_ID2) || (data == SENSOR_ID3)  || (data == SENSOR_ID4))) 
+          if (lastRx == START_STOP && (data == SENSOR_ID1)) 
             {
              
               switch(FR_ID_count) {
